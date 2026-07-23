@@ -8,6 +8,29 @@
 
 ---
 
+## 整体流水线
+
+```mermaid
+flowchart TD
+    R[需求 requirement] -->|源码驱动,不许猜| A[可测性分析<br/>推导该测哪些接口]
+    A --> D[测试设计<br/>ISTQB分类用例]
+    D --> S{充分性四闸}
+    S -->|闸① 覆盖率反推| S1[源码当分母算覆盖率]
+    S -->|闸② 维度清单| S2[缺哪个维度标红]
+    S -->|闸③ 对抗补全| S3[拿缺口清单驱动AI补]
+    S -->|闸④ 缺陷模式| S4[比对已知会坑的]
+    S1 & S2 & S3 & S4 --> E[真实执行<br/>API+签名 / 性能 / E2E]
+    E --> F[缺陷归因<br/>6类根因]
+    F --> RP[报告 + 回写]
+    subgraph 多Agent编排器
+    A -.codex/claude worker.-> D
+    end
+```
+
+**一句话读懂**:给它一个需求 → 它自己读源码推导接口 → 设计用例 → **四道闸算出测得全不全(可度量)** → 真实执行 → 归因 → 出报告。全程本地、不出网。
+
+---
+
 ## 能力一览
 
 | 能力 | 说明 |
@@ -20,8 +43,17 @@
 | **报告 + 回写** | MD/HTML 报告 + 工单回写 payload(可配置发送)。 |
 | **多项目 / CI** | `contracts/systems.yaml` 声明式多系统配置 + GitHub Actions。 |
 | **多 Agent 编排器** | 把 claude/codex 当"员工":老板派任务、技能可插拔、任务依赖 DAG、并发、小队委派、定时触发。全本地不出网。 |
+| **测试充分性四闸** | 把"够不够全"变成数字:覆盖率反推(源码当分母)+ 维度清单 + 对抗补全 + 缺陷模式比对。**AI 说测全了不算,机器算出来的才算。** |
 
 **核心信条**:源码驱动(依据真实代码,不是 AI 拍脑袋)+ 结果不伪造(`blocked ≠ failed`,`dry-run ≠ 成功`)。
+
+### 需求驱动 + 充分性(平台的两个高级特性)
+
+```bash
+python orchestrator/demo_requirement.py            # 给需求(不给接口),它自己推导该测什么
+python tools/sufficiency/sufficiency_pipeline.py \  # 四道闸算充分性,给出覆盖率数字+缺口清单
+    --spec api_spec.json --cases api_cases.yaml --patterns tools/sufficiency/defect_patterns.yaml
+```
 
 ### 多 Agent 编排器(orchestrator/)
 
