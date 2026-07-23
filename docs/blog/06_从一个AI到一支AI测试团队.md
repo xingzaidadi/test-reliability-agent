@@ -67,9 +67,6 @@ codex(员工B):拿着缺口清单专门补漏
 
 "团队协作"不是喊口号,得有真实的任务编排。编排器支持 DAG 依赖——前一个任务的产出,自动喂给后一个:
 
-
-![需求驱动](figures/fig4_需求驱动.png)
-
 ```python
 orch.submit(Task(id="REQ-ANALYZE", skill="analyze_requirement"))
 orch.submit(Task(id="REQ-DESIGN",  skill="design_test",
