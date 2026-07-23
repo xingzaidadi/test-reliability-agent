@@ -61,6 +61,17 @@ codex(员工B):拿着缺口清单专门补漏
 
 一个负责"写",一个负责"补漏",中间用机器算的覆盖率当"裁判"。**这比单个 AI 自己写自己检查,可靠得多**——因为制衡的核心是"用不同的角色相互约束",而不是让同一个角色自我监督。
 
+```mermaid
+flowchart LR
+    Boss[Orchestrator 老板] -->|派活| A[员工A codex<br/>生成用例]
+    A --> J{覆盖率反推<br/>机器裁判}
+    J -->|算出缺口| B[员工B codex<br/>专门补漏]
+    B --> J2{复算}
+    J2 -->|闭环| Done[充分性达标]
+    style J fill:#fef7e0,stroke:#e65100
+    style J2 fill:#fef7e0,stroke:#e65100
+```
+
 ---
 
 ## 五、真实跑通:任务依赖 DAG
