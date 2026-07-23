@@ -1,0 +1,137 @@
+workspace_id: target-system-test
+
+agents:
+  squad_leader_agent:
+    type: multica_agent
+    description: 接收 Multica issue，判断类型，路由到对应 Mify workflow，汇总最终结果
+    mify_nodes:
+      - workflow_route
+      - execution_decide
+    tools: []
+    input:
+      - multica_issue.json
+    output:
+      - workflow_route_decision.json
+
+  context_agent:
+    type: multica_agent
+    description: 读取源码、接口文档、历史用例，生成结构化 context_package
+    mify_nodes:
+      - context_load
+      - scope_analyze
+    tools:
+      - source_reader
+    input:
+      - multica_issue.json
+      - source_path: E:/workspace/idea/priceCenterServer/target-service
+    output:
+      - context_package.json
+      - scope_analysis.json
+
+  case_generation_agent:
+    type: multica_agent
+    description: 基于 context 生成 API/UI/E2E 用例，标注来源、优先级、风险
+    mify_nodes:
+      - case_generate
+      - api_cases_generate
+      - ui_flow_generate
+    tools: []
+    input:
+      - context_package.json
+      - scope_analysis.json
+    output:
+      - test_cases.json
+      - test_cases.md
+      - api_cases.yaml
+      - ui_flow.yaml
+
+  case_review_agent:
+    type: multica_agent
+    description: 审查用例覆盖率、断言质量、风险缺口，生成 review matrix
+    mify_nodes:
+      - case_validate
+    tools: []
+    input:
+      - test_cases.json
+    output:
+      - case_review_matrix.json
+
+  api_execution_agent:
+    type: multica_tool_agent
+    description: 执行 API 用例，调用 target-system 测试环境接口，收集响应
+    mify_nodes:
+      - execution_plan
+      - api_result_summary
+    tools:
+      - api_runner
+    input:
+      - api_cases.yaml
+      - execution_plan.json
+    output:
+      - api_execution_result.json
+    env:
+      base_url: TARGET_SYSTEM_BASE_URL   # http://your-test-host.example.com/price
+      token: TARGET_SYSTEM_TOKEN
+
+  ui_execution_agent:
+    type: multica_tool_agent
+    description: 执行 UI flow，驱动 PurchaseQuery 页面只读查询，采集截图和 trace
+    mify_nodes:
+      - execution_plan
+      - ui_result_summary
+    tools:
+      - ui_runner
+    input:
+      - ui_flow.yaml
+      - execution_plan.json
+    output:
+      - ui_execution_result.json
+      - screenshots/
+      - trace.zip
+    env:
+      ui_url: TARGET_SYSTEM_UI_URL
+      test_user: TARGET_SYSTEM_TEST_USER      # test-user-01
+      test_password: TARGET_SYSTEM_TEST_PASSWORD
+
+  performance_agent:
+    type: multica_tool_agent
+    description: 对 pullPrice 接口做轻量性能采样，记录 p50/p95，不做压测
+    mify_nodes: []
+    tools:
+      - perf_probe
+    input:
+      - execution_plan.json
+    output:
+      - performance_result.json
+
+  defect_analysis_agent:
+    type: multica_agent
+    description: 分析失败原因，分类为环境/数据/用例/产品/工具/待确认，给出修复建议
+    mify_nodes:
+      - defect_analyze
+      - repair_suggest
+    tools:
+      - artifact_reader
+    input:
+      - artifact_index.json
+      - execution_plan.json
+    output:
+      - defect_analysis.json
+      - repair_suggestion.md
+
+  report_agent:
+    type: multica_agent
+    description: 生成可汇报 Markdown 报告，回写 Multica comment/status/artifact link
+    mify_nodes:
+      - report_generate
+    tools:
+      - report_renderer
+      - notifier
+    input:
+      - test_cases.json
+      - artifact_index.json
+      - defect_analysis.json
+      - repair_suggestion.md
+    output:
+      - test_agent_report.md
+      - multica_comment_payload.json

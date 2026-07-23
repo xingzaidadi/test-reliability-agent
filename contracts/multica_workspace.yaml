@@ -1,0 +1,31 @@
+workspace_id: target-system-test
+name: 价格中心测试空间
+description: "超级测试 Agent V1 MVP workspace — target-system"
+
+target_system:
+  system_id: target-system
+  name: target-system（价格中心）
+  type: web-api
+  source_path: E:/workspace/idea/priceCenterServer/target-service
+  docs_path: E:/workspace/idea/priceCenterServer/target-service/docs
+  api_base_url_env: TARGET_SYSTEM_BASE_URL      # http://your-test-host.example.com/price
+  ui_base_url_env: TARGET_SYSTEM_UI_URL          # PurchaseMgmt/PurchaseQuery 页面
+
+runtime:
+  os: windows
+  shell: powershell
+  cwd: E:/workspace/idea/priceCenterServer/target-service
+  artifact_root: outputs/runs
+  default_timeout_seconds: 600
+
+auth:
+  test_user_env: TARGET_SYSTEM_TEST_USER         # test-user-01
+  test_password_env: TARGET_SYSTEM_TEST_PASSWORD  # 不写真实值
+  token_env: TARGET_SYSTEM_TOKEN
+
+writeback:
+  status: multica issue status
+  comment: multica issue comment
+  artifact_link: multica issue artifact
+
+owner: developer

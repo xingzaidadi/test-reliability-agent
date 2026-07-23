@@ -1,0 +1,36 @@
+# 多项目/多环境配置(声明式,新增系统只加一段,不改代码)
+# 这是"从1个系统扩展到多项目"的配置基础。
+# 敏感值(appkey/token/密码)一律用环境变量名,不写真实值。
+
+systems:
+  # 系统1:价格中心(已真实跑通)
+  target-system:
+    description: "价格中心 X5 接口系统(纯后端)"
+    protocol: x5                      # x5 | rest | grpc
+    tech_stack: "Java Spring Boot"
+    source_path_env: TARGET_SYSTEM_SOURCE_PATH
+    envs:
+      test:
+        base_url_env: TARGET_SYSTEM_BASE_URL   # http://your-test-host.example.com/price
+        auth:
+          type: x5_sign                            # X5签名鉴权
+          appid: APP_ID_PLACEHOLDER
+          appkey_env: TARGET_SYSTEM_APPKEY      # 环境变量注入,不写死
+      # 将来加 staging/prod 只在这里加一段
+    capabilities: [api, perf, e2e, unit_test, defect]  # 该系统已验证的能力
+
+  # 系统2:示例——将来接入新系统的模板(未启用)
+  # example-rest-system:
+  #   description: "某REST系统"
+  #   protocol: rest
+  #   tech_stack: "Node.js"
+  #   envs:
+  #     test:
+  #       base_url_env: EXAMPLE_BASE_URL
+  #       auth:
+  #         type: bearer_token
+  #         token_env: EXAMPLE_TOKEN
+  #   capabilities: [api, perf]
+
+# 默认系统(不指定 --system 时用哪个)
+default_system: target-system

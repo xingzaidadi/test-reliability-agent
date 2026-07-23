@@ -1,0 +1,73 @@
+squad_id: super-test-agent-squad
+workspace_id: target-system-test
+leader: squad_leader_agent
+
+agents:
+  - id: squad_leader_agent
+    role: issue_router
+    skills:
+      - issue_decompose
+      - workflow_route
+      - result_summary
+
+  - id: context_agent
+    role: context_loader
+    skills:
+      - vaf_context_load
+      - source_scan
+      - docs_summary
+
+  - id: case_generation_agent
+    role: case_designer
+    skills:
+      - vaf_case_generate
+      - vcb_three_scan_case_gen
+
+  - id: case_review_agent
+    role: case_reviewer
+    skills:
+      - coverage_review
+      - assertion_review
+      - risk_review
+
+  - id: api_execution_agent
+    role: api_executor
+    skills:
+      - vaf_http_execution
+      - vcb_request_json
+      - api_tester_optional
+
+  - id: ui_execution_agent
+    role: ui_executor
+    skills:
+      - vaf_web_execution
+      - vcb_playwright_sample
+      - web_flow_runner_optional
+
+  - id: performance_agent
+    role: perf_probe
+    skills:
+      - http_timing_probe
+      - ui_timing_probe
+
+  - id: defect_analysis_agent
+    role: failure_analyzer
+    skills:
+      - vaf_result_analysis
+      - vcb_diagnostics
+      - evidence_summary
+
+  - id: report_agent
+    role: report_writer
+    skills:
+      - vaf_report
+      - artifact_summary
+      - notification_summary
+
+issue_types:
+  - full_test
+  - api_test
+  - ui_test
+  - patrol
+  - defect_analysis
+  - report

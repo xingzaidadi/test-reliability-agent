@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "description": "api_runner 输出格式",
+  "type": "object",
+  "required": ["multica_issue_id", "status", "total", "passed", "failed", "cases"],
+  "properties": {
+    "multica_issue_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "status": {"enum": ["passed", "failed", "blocked"]},
+    "total": {"type": "integer"},
+    "passed": {"type": "integer"},
+    "failed": {"type": "integer"},
+    "duration_ms": {"type": "integer"},
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "priority": {"enum": ["P0", "P1", "P2"]},
+          "status": {"enum": ["passed", "failed", "skipped"]},
+          "duration_ms": {"type": "integer"},
+          "request": {
+            "type": "object",
+            "properties": {
+              "method": {"type": "string"},
+              "url": {"type": "string"},
+              "body": {}
+            }
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "status_code": {"type": "integer"},
+              "body": {}
+            }
+          },
+          "assertions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "expected": {},
+                "actual": {},
+                "passed": {"type": "boolean"}
+              }
+            }
+          },
+          "error": {"type": "string"}
+        }
+      }
+    }
+  }
+}

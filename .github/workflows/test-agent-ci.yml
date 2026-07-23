@@ -1,0 +1,61 @@
+# 测试Agent CI:装依赖 → 校验workflow → 跑API用例 → 出报告
+# 真跑需在有内网访问的runner + 配好secrets;公网runner会因连不上测试环境而在执行步骤失败(预期)。
+# secrets 配置:仓库 Settings → Secrets → 加 TARGET_SYSTEM_APPKEY 等。
+
+name: test-agent-ci
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:      # 支持手动触发
+
+jobs:
+  test-agent:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SYSTEM_BASE_URL: ${{ secrets.TARGET_SYSTEM_BASE_URL }}
+      TARGET_SYSTEM_APPKEY:   ${{ secrets.TARGET_SYSTEM_APPKEY }}
+      PYTHONIOENCODING: utf-8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Validate Mify workflow
+        run: python cli/test_squad.py mify validate --workflow mify/workflows/super_test_agent_v1.yaml
+
+      - name: Doctor (demo profile,不依赖真实环境)
+        run: python cli/test_squad.py doctor --profile demo
+
+      # 以下步骤需内网+secrets;公网runner会失败,属预期。
+      # 真实CI应部署在有内网访问的self-hosted runner上。
+      - name: Run API tests
+        if: ${{ env.TARGET_SYSTEM_BASE_URL != '' }}
+        run: python cli/test_squad.py run-api --issue ISSUE-001
+        continue-on-error: true
+
+      - name: Perf probe
+        if: ${{ env.TARGET_SYSTEM_BASE_URL != '' }}
+        run: python tools/api-runner/api_execution_tool.py --issue ISSUE-001 --perf --samples 10 --priority P0
+        continue-on-error: true
+
+      - name: Generate report
+        if: ${{ env.TARGET_SYSTEM_BASE_URL != '' }}
+        run: python cli/test_squad.py report --issue ISSUE-001
+        continue-on-error: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-agent-report
+          path: outputs/runs/ISSUE-001/
+        if: always()

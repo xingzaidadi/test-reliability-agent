@@ -1,0 +1,58 @@
+runtime_id: local-windows-runtime
+workspace_id: target-system-test
+os: windows
+shell: powershell
+
+allowed_tools:
+  - id: source_reader
+    description: 只读扫描 target-service 源码
+    risk: low
+    command: read-only file scan
+    path: E:/workspace/idea/priceCenterServer/target-service
+
+  - id: api_runner
+    description: 执行 target-system 测试环境 API 用例
+    risk: medium
+    command: test-squad run-api
+    base_url_env: TARGET_SYSTEM_BASE_URL
+    requires_human_confirmation: false
+
+  - id: ui_runner
+    description: 驱动 PurchaseQuery 页面只读查询流程
+    risk: medium
+    command: test-squad run-ui
+    ui_url_env: TARGET_SYSTEM_UI_URL
+    profile: readonly
+    requires_human_confirmation: false
+
+  - id: perf_probe
+    description: 对 pullPrice 接口做轻量性能采样（5次，记录 p50/p95）
+    risk: low
+    command: test-squad perf-probe
+
+  - id: artifact_collector
+    description: 收集所有 tool 产物，生成 artifact_index.json
+    risk: low
+    command: test-squad collect-artifacts
+
+  - id: report_renderer
+    description: 渲染 test_agent_report.md 和 ui_report.html
+    risk: low
+    command: test-squad render-report
+
+blocked_actions:
+  - delete
+  - approve
+  - release
+  - publish
+  - payment
+  - settlement
+  - irreversible_submit
+  - modify_production_data
+
+human_confirmation_required:
+  - create
+  - update
+  - submit
+  - upload
+  - reversible_write

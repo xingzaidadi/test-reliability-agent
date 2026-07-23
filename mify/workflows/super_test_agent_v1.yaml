@@ -1,0 +1,162 @@
+workflow_id: super_test_agent_v1
+workspace_id: "{{multica_workspace_id}}"
+runtime_owner: multica
+version: 1
+description: "超级测试 Agent V1 — 通用全链路测试 Workflow（用例生成→执行→缺陷分析→修复建议→测试报告）"
+
+# ============================================================
+# 通用设计说明
+# ============================================================
+# 本 workflow 适用于任意自研系统，不绑定任何特定系统。
+# 系统信息（名称、源码路径、技术栈、协议）通过 required_context 注入。
+# Mify agent_node 使用 LLM 做智能推理（用例生成、缺陷分析、报告撰写）。
+# Mify tool_node 调用真实执行器（api_runner/ui_runner/perf_probe）。
+# VAF test_case_standard.md 约束用例格式（Given-When-Then）。
+# VCB 的 case-gen 输出可作为 case_generate 节点的外部输入上下文。
+# ============================================================
+
+required_context:
+  - multica_workspace_id    # 当前系统的 Multica workspace，如 target-system-test
+  - multica_issue_id        # ISSUE-xxx
+  - multica_agent_id
+  - system_name             # 系统名称，如 target-system / isc-procurement / 任意自研系统
+  - tech_stack              # 技术栈，如 Java Spring Boot / Node.js / 等
+  - source_path             # 源码根路径，如 E:/workspace/idea/xxx
+  - target_env              # 测试环境标识，如 test / staging / dev
+  - api_base_url_env        # BASE URL 环境变量名，如 TARGET_SYSTEM_BASE_URL
+
+nodes:
+  context_load:
+    type: agent_node
+    agent: context_agent
+    prompt: mify/prompts/context_load.mify.md
+    input:
+      system_name: "{{system_name}}"
+      tech_stack: "{{tech_stack}}"
+      source_path: "{{source_path}}"
+      target_env: "{{target_env}}"
+      api_base_url_env: "{{api_base_url_env}}"
+    output: context_package.json
+
+  scope_analyze:
+    type: agent_node
+    agent: context_agent
+    prompt: mify/prompts/scope_analyze.mify.md
+    input:
+      - context_package.json
+    output: scope_analysis.json
+
+  case_generate:
+    type: agent_node
+    agent: case_generation_agent
+    prompt: mify/prompts/case_generate.mify.md
+    input:
+      - context_package.json
+      - scope_analysis.json
+    output:
+      - test_cases.json
+      - test_cases.md
+      - api_cases.yaml
+      - ui_flow.yaml
+
+  case_validate:
+    type: agent_node
+    agent: case_review_agent
+    prompt: mify/prompts/case_validate.mify.md
+    input:
+      - test_cases.json
+    output: case_review_matrix.json
+
+  human_confirm_cases:
+    type: human_node
+    input:
+      - test_cases.md
+      - case_review_matrix.json
+    output: human_confirmation.json
+    timeout_minutes: 60
+
+  execution_plan:
+    type: router_node
+    agent: squad_leader_agent
+    prompt: mify/prompts/execution_plan.mify.md
+    input:
+      - test_cases.json
+      - human_confirmation.json
+      - contracts/runtime_capability.yaml
+    output: execution_plan.json
+
+  run_api_tool:
+    type: tool_node
+    tool: api_runner
+    condition: execution_plan.has_api == true
+    input: execution_plan.json
+    output: api_execution_result.json
+    env:
+      base_url: "{{api_base_url_env}}"
+      token: "{{system_name | upper | replace('-','_')}}_TOKEN"
+
+  run_ui_tool:
+    type: tool_node
+    tool: ui_runner
+    condition: execution_plan.has_ui == true
+    input: execution_plan.json
+    output: ui_execution_result.json
+    env:
+      ui_url: "{{system_name | upper | replace('-','_')}}_UI_URL"
+      test_user: "{{system_name | upper | replace('-','_')}}_TEST_USER"
+      test_password: "{{system_name | upper | replace('-','_')}}_TEST_PASSWORD"
+
+  perf_probe_tool:
+    type: tool_node
+    tool: perf_probe
+    condition: execution_plan.has_perf == true
+    input: execution_plan.json
+    output: performance_result.json
+
+  artifact_collect:
+    type: tool_node
+    tool: artifact_collector
+    input:
+      - api_execution_result.json
+      - ui_execution_result.json
+      - performance_result.json
+    output: artifact_index.json
+
+  defect_analyze:
+    type: agent_node
+    agent: defect_analysis_agent
+    prompt: mify/prompts/defect_analyze.mify.md
+    input:
+      - artifact_index.json
+      - execution_plan.json
+    output: defect_analysis.json
+
+  repair_suggest:
+    type: agent_node
+    agent: defect_analysis_agent
+    prompt: mify/prompts/repair_suggest.mify.md
+    input:
+      - defect_analysis.json
+      - context_package.json
+    output: repair_suggestion.md
+
+  report_generate:
+    type: agent_node
+    agent: report_agent
+    prompt: mify/prompts/report_generate.mify.md
+    input:
+      - test_cases.json
+      - artifact_index.json
+      - defect_analysis.json
+      - repair_suggestion.md
+      - context_package.json
+    output: test_agent_report.md
+
+  multica_writeback:
+    type: tool_node
+    tool: multica_issue_adapter
+    input:
+      - artifact_index.json
+      - test_agent_report.md
+      - defect_analysis.json
+    output: multica_comment_payload.json

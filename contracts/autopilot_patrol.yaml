@@ -1,0 +1,23 @@
+workspace_id: target-system-test
+
+patrols:
+  - id: daily_smoke
+    description: 每日 09:30 对 target-system 测试环境做 P0 smoke 巡检
+    workspace_id: target-system-test
+    issue_type: patrol
+    schedule: "weekday 09:30 Asia/Shanghai"
+    agent: squad_leader_agent
+    workflow: super_test_agent_v1
+    scope:
+      api_cases: p0         # 只跑 pullPrice P0 用例
+      ui_flows: readonly    # 只跑 query_purchase_price 只读流程
+      perf_probe: baseline  # 采样 pullPrice p50/p95
+    retry:
+      max_attempts: 1
+      retry_on:
+        - env_issue
+        - data_issue
+    report:
+      type: daily
+      writeback: true
+      notify: developer

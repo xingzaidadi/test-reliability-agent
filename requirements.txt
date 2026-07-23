@@ -1,0 +1,13 @@
+# Super Test Agent — Python 依赖
+# 安装: pip install -r requirements.txt
+
+# Track C/D 核心依赖
+pyyaml>=6.0          # YAML 解析（api_cases.yaml / ui_flow.yaml）
+playwright>=1.40.0   # UI 自动化执行（Track D）
+
+# Track G/H CLI 依赖（标准库，无需安装）
+# argparse, json, os, sys, urllib, subprocess, pathlib — 全部内置
+
+# 可选：开发调试
+# pytest>=7.0
+# pytest-playwright>=0.4

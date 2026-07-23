@@ -1,0 +1,109 @@
+workspace_id: target-system-test
+
+# 能力来源优先级：VAF/VCB 优先，补位工具按需启用
+
+skills:
+  # VAF 测试流程 prompts
+  vaf_context_load:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/T02_context_load.md
+    target: mify/prompts/context_load.mify.md
+    type: mify_prompt
+    status: pending_copy
+
+  vaf_test_plan:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/T03_test_plan.md
+    target: mify/prompts/test_plan_generate.mify.md
+    type: mify_prompt
+    status: pending_copy
+
+  vaf_case_generate:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/T04_testcase_design.md
+    target: mify/prompts/case_generate.mify.md
+    type: mify_prompt
+    status: pending_copy
+
+  vaf_case_validate:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/T04_testcase_validation.md
+    target: mify/prompts/case_validate.mify.md
+    type: mify_prompt
+    status: pending_copy
+
+  vaf_http_execution:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/execution_skill_http.md
+    target: tools/api-runner
+    type: tool_runtime
+    status: pending_copy
+
+  vaf_web_execution:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/execution_skill_web.md
+    target: tools/ui-runner
+    type: tool_runtime
+    status: pending_copy
+
+  vaf_result_analysis:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/T07_result_analysis.md
+    target: mify/prompts/defect_analyze.mify.md
+    type: mify_prompt
+    status: pending_copy
+
+  vaf_report:
+    source: E:/workspace/vaf/vaf/vibe-agentic-flow/core/prompts/testing/T10_test_report.md
+    target: mify/prompts/report_generate.mify.md
+    type: mify_prompt
+    status: pending_copy
+
+  # VCB 控制面能力
+  vcb_three_scan_case_gen:
+    source: E:/workspace/VCB/vibe-claw-bot/docs/superpowers/specs/2026-06-03-vcb-case-gen-design.md
+    target: mify/prompts/case_generate.mify.md
+    type: mify_prompt_reference
+    status: pending_copy
+
+  vcb_flow_definition_loader:
+    source: E:/workspace/VCB/vibe-claw-bot
+    symbol: FlowDefinitionLoader
+    target: adapters/mify/MifyFlowDefinitionLoader
+    type: code_reference
+    status: pending_copy
+
+  vcb_prompt_assembler:
+    source: E:/workspace/VCB/vibe-claw-bot
+    symbol: PromptAssembler
+    target: adapters/mify/MifyPromptAssembler
+    type: code_reference
+    status: pending_copy
+
+  vcb_request_json:
+    source: E:/workspace/VCB/vibe-claw-bot
+    symbol: requestJson helper
+    target: tools/api-runner
+    type: code_reference
+    status: pending_copy
+
+  vcb_playwright_sample:
+    source: E:/workspace/VCB/vibe-claw-bot
+    symbol: Playwright e2e sample
+    target: tools/ui-runner
+    type: code_reference
+    status: pending_copy
+
+  # 补位工具（仅在 VAF/VCB 不满足时启用）
+  api_tester_optional:
+    source: E:/workspace/ai-api-tester
+    target: tools/api-runner
+    type: supplement
+    enabled: false
+    enable_when:
+      - 需要源码级 API 路由定位
+      - 需要批量扫描接口
+      - 需要从历史用例自动修复
+      - VAF HTTP 执行能力不足
+
+  web_flow_runner_optional:
+    source: E:/workspace/sap-playwright-agent
+    target: tools/ui-runner
+    type: supplement
+    enabled: false
+    enable_when:
+      - VAF/VCB Playwright 样例不足以稳定执行
+      - 需要 Flow Engine / Action Registry / Recording Pack

@@ -1,0 +1,81 @@
+# UI Flow 模板 — query_purchase_price
+# 由 case_generate.mify.md 自动生成，此为参考格式
+
+flow_id: query_purchase_price
+name: 采购价格查询
+profile: readonly
+ui_url_env: TARGET_SYSTEM_UI_URL
+test_user_env: TARGET_SYSTEM_TEST_USER
+test_password_env: TARGET_SYSTEM_TEST_PASSWORD
+
+steps:
+  - id: step_01
+    name: 打开采购价格查询页面
+    action: navigate
+    url: "{{TARGET_SYSTEM_UI_URL}}"
+    wait: domcontentloaded
+    timeout_ms: 30000
+    screenshot: true
+    assertions:
+      - type: url_contains
+        value: PurchaseQuery
+
+  - id: step_02
+    name: 等待页面加载完成
+    action: wait_for_selector
+    selector: ".el-loading-mask, .ant-spin"
+    state: hidden
+    timeout_ms: 15000
+    screenshot: true
+
+  - id: step_03
+    name: 验证查询区域可见
+    action: assert_visible
+    selector: "button:has-text('查询')"
+    screenshot: true
+    assertions:
+      - type: visible
+        expected: true
+
+  - id: step_04
+    name: 点击查询（不填条件，查默认数据）
+    action: click
+    selector: "button:has-text('查询')"
+    wait_after_ms: 1000
+    screenshot: true
+    requires_human_confirmation: false
+
+  - id: step_05
+    name: 等待查询结果加载
+    action: wait_for_selector
+    selector: ".el-loading-mask, .ant-spin"
+    state: hidden
+    timeout_ms: 15000
+    screenshot: true
+
+  - id: step_06
+    name: 校验列表有数据
+    action: assert
+    screenshot: true
+    assertions:
+      - type: element_count
+        selector: ".el-table__body tbody tr, .ant-table-tbody tr"
+        condition: ">= 1"
+        on_fail: "列表为空，可能是测试数据问题（DATA 类失败）"
+
+  - id: step_07
+    name: 校验关键列字段显示正常
+    action: assert_text
+    screenshot: true
+    assertions:
+      - type: not_contain_text
+        selector: ".el-table__body, .ant-table-tbody"
+        value: "undefined"
+      - type: not_contain_text
+        selector: ".el-table__body, .ant-table-tbody"
+        value: "null"
+
+on_failure:
+  capture_screenshot: true
+  capture_trace: true
+  save_path: outputs/runs/{{multica_issue_id}}/screenshots/

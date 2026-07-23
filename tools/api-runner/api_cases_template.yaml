@@ -1,0 +1,111 @@
+# API 用例模板 — target-system
+# 由 case_generate.mify.md 自动生成，此为参考格式
+
+base_url_env: TARGET_SYSTEM_BASE_URL
+token_env: TARGET_SYSTEM_TOKEN
+
+cases:
+  - id: TC_001
+    name: pullPrice 正向查询
+    priority: P0
+    method: POST
+    path: /x5/api/pullPrice
+    headers:
+      Content-Type: application/json
+    body:
+      params:
+        - objectCode: "{{TEST_OBJECT_CODE}}"    # 测试环境有效价格对象编码，运行前替换
+          qty: 1
+    assertions:
+      - type: status_code
+        expected: 200
+      - type: json_path
+        path: "$.data.code"
+        expected: "SUCCESS"
+      - type: json_path
+        path: "$.data.dataList"
+        condition: length > 0
+      - type: response_time_ms
+        max: 3000
+
+  - id: TC_002
+    name: pullPrice 参数缺失（params 为空）
+    priority: P0
+    method: POST
+    path: /x5/api/pullPrice
+    headers:
+      Content-Type: application/json
+    body:
+      params: []
+    assertions:
+      - type: status_code
+        expected: 400
+      - type: json_path
+        path: "$.data.code"
+        expected: "FAIL"
+
+  - id: TC_003
+    name: pullPrice objectCode 不存在
+    priority: P0
+    method: POST
+    path: /x5/api/pullPrice
+    headers:
+      Content-Type: application/json
+    body:
+      params:
+        - objectCode: "NONEXISTENT_CODE_00000"
+          qty: 1
+    assertions:
+      - type: status_code
+        expected: 200
+      - type: json_path
+        path: "$.data.dataList[0].code"
+        expected: "FAIL"
+
+  - id: TC_004
+    name: pullPrice 鉴权失败（token 缺失）
+    priority: P0
+    method: POST
+    path: /x5/api/pullPrice
+    headers:
+      Content-Type: application/json
+      X-Token: ""    # 故意置空
+    body:
+      params:
+        - objectCode: "{{TEST_OBJECT_CODE}}"
+          qty: 1
+    assertions:
+      - type: status_code
+        expected: 401
+
+  - id: TC_005
+    name: pullPrice 边界值（qty 为 0）
+    priority: P1
+    method: POST
+    path: /x5/api/pullPrice
+    headers:
+      Content-Type: application/json
+    body:
+      params:
+        - objectCode: "{{TEST_OBJECT_CODE}}"
+          qty: 0
+    assertions:
+      - type: status_code
+        expected_in: [200, 400]    # 业务逻辑决定，运行后人工确认
+
+  - id: TC_006
+    name: getQty 正向查询
+    priority: P1
+    method: POST
+    path: /x5/api/getQty
+    headers:
+      Content-Type: application/json
+    body:
+      data:
+        - priceDocCode: "{{TEST_PRICE_DOC_CODE}}"    # 测试环境有效价格单据，运行前替换
+    assertions:
+      - type: status_code
+        expected: 200
+      - type: json_path
+        path: "$.data"
+        condition: not_null

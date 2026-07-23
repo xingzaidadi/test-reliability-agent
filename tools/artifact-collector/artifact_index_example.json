@@ -1,0 +1,35 @@
+{
+  "multica_issue_id": "ISSUE-001",
+  "workspace_id": "target-system-test",
+  "run_id": "run-20260611-001",
+  "status": "passed",
+  "target_system": "target-system",
+  "summary": {
+    "total_cases": 6,
+    "p0_passed": 4,
+    "p0_total": 4,
+    "p1_passed": 2,
+    "p1_total": 2,
+    "api_passed": 5,
+    "api_total": 6,
+    "ui_passed": 1,
+    "ui_total": 1
+  },
+  "artifacts": [
+    {"type": "context_package",    "path": "outputs/runs/ISSUE-001/context_package.json",       "required": true,  "exists": true},
+    {"type": "test_cases",         "path": "outputs/runs/ISSUE-001/test_cases.json",             "required": true,  "exists": true},
+    {"type": "test_cases_md",      "path": "outputs/runs/ISSUE-001/test_cases.md",               "required": true,  "exists": true},
+    {"type": "api_cases",          "path": "outputs/runs/ISSUE-001/api_cases.yaml",              "required": false, "exists": true},
+    {"type": "ui_flow",            "path": "outputs/runs/ISSUE-001/ui_flow.yaml",                "required": false, "exists": true},
+    {"type": "execution_plan",     "path": "outputs/runs/ISSUE-001/execution_plan.json",         "required": true,  "exists": true},
+    {"type": "api_execution_result","path": "outputs/runs/ISSUE-001/api_execution_result.json",  "required": false, "exists": true},
+    {"type": "ui_execution_result","path": "outputs/runs/ISSUE-001/ui_execution_result.json",    "required": false, "exists": true},
+    {"type": "performance_result", "path": "outputs/runs/ISSUE-001/performance_result.json",     "required": false, "exists": true},
+    {"type": "defect_analysis",    "path": "outputs/runs/ISSUE-001/defect_analysis.json",        "required": true,  "exists": true},
+    {"type": "repair_suggestion",  "path": "outputs/runs/ISSUE-001/repair_suggestion.md",        "required": false, "exists": true},
+    {"type": "report",             "path": "outputs/runs/ISSUE-001/test_agent_report.md",        "required": true,  "exists": true},
+    {"type": "screenshots",        "path": "outputs/runs/ISSUE-001/screenshots/",                "required": false, "exists": true},
+    {"type": "trace",              "path": "outputs/runs/ISSUE-001/trace.zip",                   "required": false, "exists": true},
+    {"type": "multica_comment",    "path": "outputs/runs/ISSUE-001/multica_comment_payload.json","required": true,  "exists": true}
+  ]
+}

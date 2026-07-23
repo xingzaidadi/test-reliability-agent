@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "description": "ui_runner 输出格式",
+  "type": "object",
+  "required": ["multica_issue_id", "flow_id", "status", "steps"],
+  "properties": {
+    "multica_issue_id": {"type": "string"},
+    "flow_id": {"type": "string"},
+    "status": {"enum": ["passed", "failed", "blocked"]},
+    "duration_ms": {"type": "integer"},
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "status": {"enum": ["passed", "failed", "skipped"]},
+          "screenshot": {"type": "string"},
+          "error": {"type": "string"},
+          "assertions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "expected": {},
+                "actual": {},
+                "passed": {"type": "boolean"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "screenshots_dir": {"type": "string"},
+        "trace": {"type": "string"},
+        "report": {"type": "string"}
+      }
+    }
+  }
+}
