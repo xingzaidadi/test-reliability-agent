@@ -1,0 +1,55 @@
+# 闸④ 缺陷模式库:已知会坑的模式,检查用例是否覆盖。
+# 两类来源:①通用API缺陷模式(行业common) ②本项目/同类项目真实发现的缺陷
+# 用例集若没覆盖这些模式 → 高风险漏测。
+
+patterns:
+  # ── 本项目真实发现的缺陷(最高价值)──────────────────
+  - id: DP001
+    source: "本项目真实发现"
+    name: "HTTP状态码与业务码不一致"
+    desc: "参数错误时HTTP=200但业务header.code=400。只看HTTP码的监控会漏报失败。"
+    check_keywords: ["header.code", "业务码", "200", "一致"]
+    severity: high
+
+  - id: DP002
+    source: "本项目真实发现(RPA经验迁移)"
+    name: "假成功:错误提示被当成功"
+    desc: "服务端返回错误提示词(如'税款不正确')但被判成功。断言必须校验真实业务状态。"
+    check_keywords: ["假成功", "业务状态", "headCode", "SUCCESS"]
+    severity: high
+
+  # ── 通用API缺陷模式(行业common)──────────────────
+  - id: DP003
+    source: "通用模式"
+    name: "枚举越界未拦截"
+    desc: "枚举字段传合法集合外的值,服务端未拦截或500而非400。"
+    check_keywords: ["枚举", "非法", "priceType", "invalid"]
+    severity: high
+
+  - id: DP004
+    source: "通用模式"
+    name: "缺参返500而非400"
+    desc: "必填参数缺失时,应返回400参数校验错,而非500系统异常。"
+    check_keywords: ["缺失", "必填", "400", "为空"]
+    severity: medium
+
+  - id: DP005
+    source: "通用模式"
+    name: "未找到误判为异常"
+    desc: "查询无数据时应友好提示(如3007),而非抛异常或空指针。"
+    check_keywords: ["不存在", "未找到", "3007", "友好"]
+    severity: medium
+
+  - id: DP006
+    source: "通用模式"
+    name: "鉴权缺失未拦截"
+    desc: "签名/token缺失或错误时,应拒绝而非放行。"
+    check_keywords: ["鉴权", "签名", "appkey", "401", "未授权"]
+    severity: high
+
+  - id: DP007
+    source: "通用模式"
+    name: "跨接口数据不一致"
+    desc: "同条件下不同接口(如pullPrice/getPrice)返回结果应一致。"
+    check_keywords: ["一致", "pullPrice", "getPrice", "跨接口"]
+    severity: medium
