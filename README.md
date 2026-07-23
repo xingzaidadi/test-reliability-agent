@@ -19,8 +19,28 @@
 | **E2E 业务链路** | 多个 API 步骤串成链路,步骤间上下文传递,任一步失败则中止。 |
 | **报告 + 回写** | MD/HTML 报告 + 工单回写 payload(可配置发送)。 |
 | **多项目 / CI** | `contracts/systems.yaml` 声明式多系统配置 + GitHub Actions。 |
+| **多 Agent 编排器** | 把 claude/codex 当"员工":老板派任务、技能可插拔、任务依赖 DAG、并发、小队委派、定时触发。全本地不出网。 |
 
 **核心信条**:源码驱动(依据真实代码,不是 AI 拍脑袋)+ 结果不伪造(`blocked ≠ failed`,`dry-run ≠ 成功`)。
+
+### 多 Agent 编排器(orchestrator/)
+
+借鉴 [multica](https://github.com/multica-ai/multica) 的 agent 编排理念,但**纯本地自研、不依赖 Docker、不出网**(合规约束下的实现)。
+
+| 抽象 | 说明 |
+|---|---|
+| Worker(员工) | 绑定 provider(codex/claude)+ runtime,统一 `run` 接口 |
+| Task(任务) | 生命周期状态机 + 依赖 DAG(前置产出注入后续) |
+| Skill(技能) | 声明式,加能力=加 skill 文件,不改核心,同事可维护 |
+| Workspace(隔离) | 按项目隔离产物/配置 |
+| Runtime(运行时) | local 已实现,remote 留接口 |
+| Squad(小队) | 员工分组 + leader 委派,稳定路由 |
+| Autopilot(定时) | cron/manual 触发自动生成任务 |
+
+```bash
+python orchestrator/demo_run.py       # V1:派活给员工执行技能
+python orchestrator/demo_run_v2.py    # V2:DAG + 并发 + 小队 + 定时触发
+```
 
 ---
 
