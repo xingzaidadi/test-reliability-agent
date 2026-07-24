@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>测试可靠性平台</title>
+<style>
+  :root{--bg:#f5f7fa;--card:#fff;--blue:#1a73e8;--green:#1e8e3e;--red:#d93025;--orange:#e65100;--gray:#5f6368}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:var(--bg);color:#202124}
+  .top{background:var(--blue);color:#fff;padding:16px 32px;display:flex;justify-content:space-between;align-items:center}
+  .top h1{font-size:20px}
+  .top a{color:#fff;opacity:.9;text-decoration:none;margin-left:20px;font-size:14px}
+  .wrap{max-width:1000px;margin:24px auto;padding:0 16px}
+  .card{background:var(--card);border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px 24px;margin-bottom:20px}
+  .card h2{font-size:16px;margin-bottom:16px;border-bottom:2px solid #eef1f5;padding-bottom:10px}
+  label{font-size:13px;color:var(--gray);display:block;margin-bottom:6px}
+  input[type=text]{width:100%;padding:10px 12px;border:1px solid #dadce0;border-radius:6px;font-size:14px}
+  .caps{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0}
+  .caps label{display:flex;align-items:center;gap:6px;font-size:14px;color:#202124;cursor:pointer}
+  .btn{background:var(--blue);color:#fff;border:none;padding:11px 28px;border-radius:6px;font-size:15px;cursor:pointer;font-weight:600}
+  .btn:disabled{background:#9aa0a6;cursor:not-allowed}
+  .log{background:#202124;color:#abb2bf;border-radius:6px;padding:14px;font-family:Consolas,monospace;font-size:13px;max-height:280px;overflow-y:auto;white-space:pre-wrap;line-height:1.6}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .stat{text-align:center;padding:18px;background:#f8f9fa;border-radius:8px;border-top:3px solid var(--blue)}
+  .stat .num{font-size:30px;font-weight:700;color:var(--blue)}
+  .stat .lbl{font-size:13px;color:var(--gray);margin-top:6px}
+  .stat.green{border-top-color:var(--green)} .stat.green .num{color:var(--green)}
+  .stat.red{border-top-color:var(--red)} .stat.red .num{color:var(--red)}
+  .stat.orange{border-top-color:var(--orange)} .stat.orange .num{color:var(--orange)}
+  .hint{font-size:12px;color:var(--gray);margin-top:8px}
+  .verdict{margin-top:14px;padding:10px 14px;border-radius:6px;font-size:14px;font-weight:600}
+  .verdict.ng{background:#fce8e6;color:var(--red)} .verdict.ok{background:#e6f4ea;color:var(--green)}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🛡️ 测试可靠性平台</h1>
+  <div><a href="https://github.com/xingzaidadi/test-reliability-agent" target="_blank">GitHub</a></div>
+</div>
+
+<div class="wrap">
+  <!-- ① 执行配置 -->
+  <div class="card">
+    <h2>① 执行配置</h2>
+    <label>Issue / 需求编号</label>
+    <input type="text" id="issue" value="ISSUE-001"/>
+    <div class="caps">
+      <label><input type="checkbox" checked disabled> 需求驱动分析</label>
+      <label><input type="checkbox" checked disabled> API 功能执行</label>
+      <label><input type="checkbox" checked disabled> 性能基线采样</label>
+      <label><input type="checkbox" checked disabled> 充分性四闸</label>
+      <label><input type="checkbox" checked disabled> 缺陷归因</label>
+    </div>
+    <button class="btn" id="runBtn" onclick="run()">▶ 一键执行全流程</button>
+    <div class="hint">点击后真实调用 pipeline.py,全本地执行,不出网</div>
+  </div>
+
+  <!-- ② 实时执行 -->
+  <div class="card" id="logCard" style="display:none">
+    <h2>② 实时执行</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- ③ 结果卡片 -->
+  <div class="card" id="resultCard" style="display:none">
+    <h2>③ 结果概览(真实数据)</h2>
+    <div class="grid">
+      <div class="stat green"><div class="num" id="cApi">-</div><div class="lbl">API 用例通过</div></div>
+      <div class="stat orange"><div class="num" id="cPerf">-</div><div class="lbl">性能 p95 (ms)</div></div>
+      <div class="stat red"><div class="num" id="cCov">-</div><div class="lbl">测试覆盖率</div></div>
+      <div class="stat red"><div class="num" id="cBug">-</div><div class="lbl">疑似产品缺陷</div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <button class="btn" style="margin-top:14px;background:#5f6368" onclick="showReport()">查看详细报告</button>
+    <pre class="log" id="report" style="display:none;margin-top:12px"></pre>
+  </div>
+</div>
+
+<script>
+async function run(){
+  const issue=document.getElementById('issue').value.trim()||'ISSUE-001';
+  const btn=document.getElementById('runBtn'); btn.disabled=true; btn.textContent='执行中...';
+  document.getElementById('logCard').style.display='block';
+  document.getElementById('resultCard').style.display='none';
+  document.getElementById('log').textContent='启动 pipeline...';
+  await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({issue})});
+  poll(issue,btn);
+}
+function poll(issue,btn){
+  const t=setInterval(async()=>{
+    const s=await(await fetch('/api/status')).json();
+    document.getElementById('log').textContent=s.log.join('\n');
+    document.getElementById('log').scrollTop=1e9;
+    if(s.done){
+      clearInterval(t); btn.disabled=false; btn.textContent='▶ 一键执行全流程';
+      loadResult(issue);
+    }
+  },1000);
+}
+async function loadResult(issue){
+  const r=await(await fetch('/api/result?issue='+issue)).json();
+  document.getElementById('resultCard').style.display='block';
+  document.getElementById('cApi').textContent=(r.api.passed??'-')+'/'+(r.api.total??'-');
+  document.getElementById('cPerf').textContent=r.perf.p95??'-';
+  document.getElementById('cCov').textContent=(r.coverage??'-')+'%';
+  document.getElementById('cBug').textContent=r.defect_product??'-';
+  const v=document.getElementById('verdict');
+  const ng=(r.verdict||'').includes('不充分');
+  v.className='verdict '+(ng?'ng':'ok');
+  v.textContent='充分性判定:'+(r.verdict||'-')+(ng?'  ← 平台不粉饰,如实报告缺口':'');
+}
+async function showReport(){
+  const issue=document.getElementById('issue').value.trim()||'ISSUE-001';
+  const el=document.getElementById('report');
+  el.style.display=el.style.display==='none'?'block':'none';
+  if(el.style.display==='block') el.textContent=await(await fetch('/api/report?issue='+issue)).text();
+}
+</script>
+</body>
+</html>
