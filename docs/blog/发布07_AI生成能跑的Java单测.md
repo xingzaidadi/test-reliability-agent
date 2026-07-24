@@ -54,8 +54,6 @@ prompt = f"""为下面的方法生成JUnit5单测,只输出Java代码。
 
 ## 三、它生成了什么(真实产出,编译跑通)
 
-> 📸 配图位置:此处配一张 codex 生成单测 + Maven 编译跑通的真实截图
-
 codex 生成了 83 行 `Api网关ControllerTest.java`,节选:
 
 ```java
